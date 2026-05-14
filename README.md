@@ -1,73 +1,76 @@
-# React + TypeScript + Vite
+# Token Cost Estimator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small **React + TypeScript + Vite** web app that estimates how much a single LLM call might cost. You enter **input and output token counts** and your provider’s **price per 1 million tokens** (separate rates for prompt vs completion). The app shows input subtotal, output subtotal, and **total USD**.
 
-Currently, two official plugins are available:
+This is for **planning and comparison only** — always confirm pricing on your vendor’s current price list.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What you need on your machine
 
-## React Compiler
+- **Node.js** (LTS recommended, e.g. 20.x or 22.x). [nodejs.org](https://nodejs.org/)
+- **npm** (bundled with Node)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Check versions:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+node -v
+npm -v
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Install
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+From the project folder:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+## Run locally (development)
+
+```bash
+npm run dev
+```
+
+Vite prints a local URL (usually `http://localhost:5173`). Open it in your browser. The page updates as you type; there is **no server-side API** and **no `.env` file** — everything runs in the browser.
+
+## How to use the app
+
+1. **Input tokens** — tokens you send in the prompt (context + user message, etc.).
+2. **Input price / 1M (USD)** — your provider’s cost per **one million** input tokens.
+3. **Output tokens** — tokens the model generates.
+4. **Output price / 1M (USD)** — cost per **one million** output tokens.
+
+**Formula:**
+
+`(input tokens ÷ 1,000,000 × input $/M) + (output tokens ÷ 1,000,000 × output $/M)`
+
+You can paste numbers with commas; invalid text is treated as zero for the calculation. Currency is formatted as **USD** in the UI.
+
+## Build for production
+
+```bash
+npm run build
+```
+
+Output goes to the `dist/` folder. You can preview that build locally:
+
+```bash
+npm run preview
+```
+
+Deploy `dist/` to any static host (Netlify, Vercel, S3 + CloudFront, etc.) — no special server configuration is required.
+
+## Lint
+
+```bash
+npm run lint
+```
+
+## Project layout (short)
+
+| Path        | Role                                      |
+| ----------- | ----------------------------------------- |
+| `src/App.tsx` | Main calculator UI and logic            |
+| `src/App.css` | Layout and styling                        |
+| `vite.config.ts` | Vite + React plugin                   |
+
+There is **no backend** and **no environment-based configuration** in this repo; “configuration” is whatever rates you type into the form for the model you are pricing.
