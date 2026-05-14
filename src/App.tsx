@@ -1,0 +1,219 @@
+import { useMemo, useState } from 'react'
+import './App.css'
+
+function parseDecimal(value: string): number {
+  const trimmed = value.trim().replace(/,/g, '')
+  if (trimmed === '' || trimmed === '.' || trimmed === '-') return 0
+  const n = Number.parseFloat(trimmed)
+  return Number.isFinite(n) ? n : 0
+}
+
+const money = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 6,
+})
+
+const compact = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 0,
+})
+
+function App() {
+  const [inputTokens, setInputTokens] = useState('')
+  const [outputTokens, setOutputTokens] = useState('')
+  const [inputPricePerMillion, setInputPricePerMillion] = useState('')
+  const [outputPricePerMillion, setOutputPricePerMillion] = useState('')
+
+  const result = useMemo(() => {
+    const inTok = Math.max(0, parseDecimal(inputTokens))
+    const outTok = Math.max(0, parseDecimal(outputTokens))
+    const inPpm = Math.max(0, parseDecimal(inputPricePerMillion))
+    const outPpm = Math.max(0, parseDecimal(outputPricePerMillion))
+
+    const inputCost = (inTok / 1_000_000) * inPpm
+    const outputCost = (outTok / 1_000_000) * outPpm
+    const total = inputCost + outputCost
+
+    return {
+      inTok,
+      outTok,
+      inPpm,
+      outPpm,
+      inputCost,
+      outputCost,
+      total,
+    }
+  }, [
+    inputTokens,
+    outputTokens,
+    inputPricePerMillion,
+    outputPricePerMillion,
+  ])
+
+  return (
+    <div className="app">
+      <header className="shell-header">
+        <div className="shell-header__inner">
+          <div className="brand">
+            <span className="brand__mark" aria-hidden="true" />
+            <div>
+              <p className="brand__title">Token Cost Estimator</p>
+              <p className="brand__subtitle">
+                Model usage pricing from token counts and per-million rates
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="shell-main">
+        <div className="layout">
+          <section className="panel panel--form" aria-labelledby="inputs-heading">
+            <h1 id="inputs-heading" className="panel__heading">
+              Usage inputs
+            </h1>
+            <p className="panel__lede">
+              Enter token volumes and provider rates (price per 1M tokens). Totals
+              update as you type.
+            </p>
+
+            <div className="fieldset">
+              <h2 className="fieldset__label">Prompt (input)</h2>
+              <div className="field-row">
+                <label className="field">
+                  <span className="field__label">Input tokens</span>
+                  <input
+                    className="field__control"
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    placeholder="e.g. 125000"
+                    value={inputTokens}
+                    onChange={(e) => setInputTokens(e.target.value)}
+                    aria-describedby="hint-input-tokens"
+                  />
+                  <span id="hint-input-tokens" className="field__hint">
+                    Raw count of tokens sent to the model
+                  </span>
+                </label>
+                <label className="field">
+                  <span className="field__label">
+                    Input price / 1M <span className="unit">USD</span>
+                  </span>
+                  <input
+                    className="field__control"
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    placeholder="e.g. 3.50"
+                    value={inputPricePerMillion}
+                    onChange={(e) =>
+                      setInputPricePerMillion(e.target.value)
+                    }
+                    aria-describedby="hint-input-ppm"
+                  />
+                  <span id="hint-input-ppm" className="field__hint">
+                    Cost per million input tokens from your vendor
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div className="fieldset">
+              <h2 className="fieldset__label">Completion (output)</h2>
+              <div className="field-row">
+                <label className="field">
+                  <span className="field__label">Output tokens</span>
+                  <input
+                    className="field__control"
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    placeholder="e.g. 4096"
+                    value={outputTokens}
+                    onChange={(e) => setOutputTokens(e.target.value)}
+                    aria-describedby="hint-output-tokens"
+                  />
+                  <span id="hint-output-tokens" className="field__hint">
+                    Tokens generated by the model
+                  </span>
+                </label>
+                <label className="field">
+                  <span className="field__label">
+                    Output price / 1M <span className="unit">USD</span>
+                  </span>
+                  <input
+                    className="field__control"
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    placeholder="e.g. 10.00"
+                    value={outputPricePerMillion}
+                    onChange={(e) =>
+                      setOutputPricePerMillion(e.target.value)
+                    }
+                    aria-describedby="hint-output-ppm"
+                  />
+                  <span id="hint-output-ppm" className="field__hint">
+                    Cost per million output tokens from your vendor
+                  </span>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <section
+            className="panel panel--summary"
+            aria-labelledby="summary-heading"
+          >
+            <h2 id="summary-heading" className="summary__title">
+              Cost breakdown
+            </h2>
+
+            <dl className="breakdown">
+              <div className="breakdown__row">
+                <dt>Input subtotal</dt>
+                <dd>{money.format(result.inputCost)}</dd>
+              </div>
+              <div className="breakdown__meta">
+                {compact.format(result.inTok)} tokens ×{' '}
+                {money.format(result.inPpm)} / 1M
+              </div>
+
+              <div className="breakdown__row">
+                <dt>Output subtotal</dt>
+                <dd>{money.format(result.outputCost)}</dd>
+              </div>
+              <div className="breakdown__meta">
+                {compact.format(result.outTok)} tokens ×{' '}
+                {money.format(result.outPpm)} / 1M
+              </div>
+
+              <div className="breakdown__divider" />
+
+              <div className="breakdown__row breakdown__row--total">
+                <dt>Total estimated cost</dt>
+                <dd>{money.format(result.total)}</dd>
+              </div>
+            </dl>
+
+            <p className="formula" role="note">
+              <strong>Formula:</strong>{' '}
+              <span className="formula__mono">
+                (input tokens ÷ 1,000,000 × input $/M) + (output tokens ÷
+                1,000,000 × output $/M)
+              </span>
+            </p>
+          </section>
+        </div>
+      </main>
+
+      <footer className="shell-footer">
+        <p>For planning only — verify rates against your provider’s current price list.</p>
+      </footer>
+    </div>
+  )
+}
+
+export default App
